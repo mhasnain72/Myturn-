@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | Smart Queue System</title>
+    
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Dashboard Header -->
+        <header class="dashboard-header">
+            <div class="header-left">
+                <h1>
+                    <i class="fas fa-chart-network"></i>
+                    Queue Dashboard
+                </h1>
+                <p class="subtitle">
+                    <i class="fas fa-clock"></i>
+                    Real-time token management system
+                    <% if (isPaused) { %>
+                        <span style="color: var(--danger); font-weight: 600; margin-left: 10px;">
+                            <i class="fas fa-pause-circle"></i> SERVICE PAUSED
+                        </span>
+                    <% } %>
+                </p>
+            </div>
+            
+            <div class="controls">
+                <a href="/toggle-pause" class="btn <%= isPaused ? 'btn-resume' : 'btn-pause' %>">
+                    <i class="fas <%= isPaused ? 'fa-play' : 'fa-pause' %>"></i>
+                    <%= isPaused ? 'Resume Service' : 'Pause Service' %>
+                </a>
+                
+                <a href="/reset-queue" class="btn btn-reset" 
+                   onclick="return confirm('⚠️ This will delete ALL tokens. Continue?')">
+                    <i class="fas fa-trash-alt"></i>
+                    Reset Queue
+                </a>
+                
+                <a href="/kiosk" class="btn btn-kiosk">
+                    <i class="fas fa-qrcode"></i>
+                    Kiosk View
+                </a>
+            </div>
+        </header>
+
+        <!-- Statistics Cards -->
+        <div class="stats-container">
+            <div class="stat-card calling">
+                <div class="stat-header">
+                    <div class="stat-icon">
+                        <i class="fas fa-bullhorn"></i>
+                    </div>
+                    <div class="stat-number">
+                        <%= activeTokens ? activeTokens.filter(t => t.status === 'Calling').length : 0 %>
+                    </div>
+                </div>
+                <div class="stat-label">Now Calling</div>
+            </div>
+            
+            <div class="stat-card waiting">
+                <div class="stat-header">
+                    <div class="stat-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-number">
+                        <%= activeTokens ? activeTokens.filter(t => t.status === 'Waiting').length : 0 %>
+                    </div>
+                </div>
+                <div class="stat-label">In Queue</div>
+            </div>
+            
+            <div class="stat-card completed">
+                <div class="stat-header">
+                    <div class="stat-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-number">
+                        <%= history ? history.filter(t => t.status === 'Completed').length : 0 %>
+                    </div>
+                </div>
+                <div class="stat-label">Completed</div>
+            </div>
+            
+            <div class="stat-card declined">
+                <div class="stat-header">
+                    <div class="stat-icon">
+                        <i class="fas fa-times-circle"></i>
+                    </div>
+                    <div class="stat-number">
+                        <%= history ? history.filter(t => t.status === 'Declined').length : 0 %>
+                    </div>
+                </div>
+                <div class="stat-label">Declined</div>
+            </div>
+        </div>
+
+        <!-- Active Queue Table -->
+        <div class="table-container">
+            <div class="section-header">
+                <h2>
+                    <i class="fas fa-list-ol"></i>
+                    Active Queue
+                    <% if (activeTokens && activeTokens.length > 0) { %>
+                        <span class="token-badge">
+                            <i class="fas fa-hashtag"></i>
+                            <%= activeTokens.length %> Tokens
+                        </span>
+                    <% } %>
+                </h2>
+                <div style="color: var(--gray); font-size: 14px;">
+                    <i class="fas fa-sync-alt"></i> Auto-refresh in <span id="countdown">10</span>s
+                </div>
+            </div>
+            
+            <% if (activeTokens && activeTokens.length > 0) { %>
+                <div class="table-wrapper">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Token #</th>
+                                <th>Customer</th>
+                                <th>CNIC</th>
+                                <th>Service</th>
+                                <th>Status</th>
+                              
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% activeTokens.forEach(t => { %>
+                            <tr>
+                                <td>
+                                    <span class="token-badge">
+                                        <i class="fas fa-ticket-alt"></i>
+                                        <%= t.token_number %>
+                                    </span>
+                                </td>
+                                <td style="font-weight: 500;">
+                                    <i class="fas fa-user-circle" style="color: var(--primary); margin-right: 8px;"></i>
+                                    <%= t.customer_name %>
+                                </td>
+                                <td style="font-family: monospace;">
+                                    <%= t.cnic_num || '—' %>
+                                </td>
+                                <td>
+                                    <span class="service-badge">
+                                        <i class="fas <%= 
+                                            t.service_type === 'New' ? 'fa-plus-circle' : 
+                                            t.service_type === 'Update' ? 'fa-edit' : 'fa-redo' 
+                                        %>"></i>
+                                        <%= t.service_type || 'General' %>
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="status-badge status-<%= t.status.toLowerCase() %> <%= t.status === 'Calling' ? 'pulse' : '' %>">
+                                        <i class="fas <%= 
+                                            t.status === 'Calling' ? 'fa-bullhorn' : 
+                                            t.status === 'Waiting' ? 'fa-clock' : 
+                                            t.status === 'Completed' ? 'fa-check' : 'fa-times' 
+                                        %>"></i>
+                                        <%= t.status %>
+                                    </span>
+                                </td>
+                                
+                            </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+            <% } else { %>
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fas fa-inbox"></i>
+                    </div>
+                    <h3>Queue is Empty</h3>
+                    <p>No active tokens in the queue. Tokens will appear here when generated from the kiosk.</p>
+                    <a href="/kiosk" class="btn btn-kiosk" style="margin-top: 20px;">
+                        <i class="fas fa-plus-circle"></i>
+                        Generate First Token
+                    </a>
+                </div>
+            <% } %>
+        </div>
+
+        <!-- History Table -->
+        <div class="table-container">
+            <div class="section-header">
+                <h2>
+                    <i class="fas fa-history"></i>
+                    Service History
+                    <% if (history && history.length > 0) { %>
+                        <span class="token-badge" style="background: linear-gradient(135deg, #6c757d, #495057);">
+                            <i class="fas fa-archive"></i>
+                            <%= history.length %> Records
+                        </span>
+                    <% } %>
+                </h2>
+                <div style="color: var(--gray); font-size: 14px;">
+                    <i class="fas fa-calendar-alt"></i> <%= new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %>
+                </div>
+            </div>
+            
+            <% if (history && history.length > 0) { %>
+                <div class="table-wrapper">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Token #</th>
+                                <th>Customer</th>
+                                <th>CNIC</th>
+                                <th>Service</th>
+                                <th>Status</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% history.forEach(t => { %>
+                            <tr>
+                                <td>
+                                    <span class="token-badge" style="background: linear-gradient(135deg, #6c757d, #495057);">
+                                        <i class="fas fa-ticket-alt"></i>
+                                        <%= t.token_number %>
+                                    </span>
+                                </td>
+                                <td style="font-weight: 500;">
+                                    <i class="fas fa-user-circle" style="color: var(--primary); margin-right: 8px;"></i>
+                                    <%= t.customer_name %>
+                                </td>
+                                <td style="font-family: monospace;">
+                                    <%= t.cnic_num || '—' %>
+                                </td>
+                                <td>
+                                    <span class="service-badge">
+                                        <i class="fas <%= 
+                                            t.service_type === 'New' ? 'fa-plus-circle' : 
+                                            t.service_type === 'Update' ? 'fa-edit' : 'fa-redo' 
+                                        %>"></i>
+                                        <%= t.service_type || 'General' %>
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="status-badge status-<%= t.status.toLowerCase() %>">
+                                        <i class="fas <%= 
+                                            t.status === 'Completed' ? 'fa-check' : 'fa-times' 
+                                        %>"></i>
+                                        <%= t.status %>
+                                    </span>
+                                </td>
+                                <td style="color: var(--gray); font-size: 14px;">
+                                    <i class="far fa-clock"></i>
+                                    <%= t.formattedDate %>
+                                </td>
+                            </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+            <% } else { %>
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fas fa-scroll"></i>
+                    </div>
+                    <h3>No History Available</h3>
+                    <p>Completed or declined tokens will appear here for record keeping.</p>
+                </div>
+            <% } %>
+        </div>
+
+        <!-- Footer -->
+        <footer class="dashboard-footer">
+            <p>
+                <i class="fas fa-cog"></i> Smart Queue System v2.0 | 
+                <i class="fas fa-server"></i> System Status: 
+              <% if (isPaused) { %>
+    <span style="color: var(--danger); font-weight: 600;">
+<% } else { %>
+    <span style="color: var(--success); font-weight: 600;">
+<% } %>
+<%= isPaused ? 'PAUSED' : 'OPERATIONAL' %>
+</span>
+                | 
+                <a href="#"><i class="fas fa-chart-line"></i> View Analytics</a>
+            </p>
+        </footer>
+    </div>
+
+    <!-- Auto-refresh Script -->
+    <script>
+        // Countdown timer
+        let seconds = 10;
+        const countdownElement = document.getElementById('countdown');
+        
+        const countdown = setInterval(() => {
+            seconds--;
+            countdownElement.textContent = seconds;
+            
+            if (seconds <= 0) {
+                clearInterval(countdown);
+                location.reload();
+            }
+        }, 1000);
+        
+        // Reset confirmation
+        const resetBtn = document.querySelector('a[href="/reset-queue"]');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', function(e) {
+                if (!confirm('⚠️ WARNING\n\nThis action will:\n• Delete ALL active tokens\n• Clear ALL history\n• Cannot be undone\n\nAre you absolutely sure?')) {
+                    e.preventDefault();
+                }
+            });
+        }
+        
+        // Add some interactivity
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add hover effect to table rows
+            const tableRows = document.querySelectorAll('.table tbody tr');
+            tableRows.forEach(row => {
+                row.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateX(5px)';
+                });
+                row.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateX(0)';
+                });
+            });
+            
+            // Notification for calling tokens
+            const callingTokens = document.querySelectorAll('.status-calling.pulse');
+            if (callingTokens.length > 0) {
+                console.log(`%c🔔 ${callingTokens.length} customer(s) are being called`, 
+                    'color: #f72585; font-weight: bold; font-size: 14px;');
+            }
+        });
+    </script>
+</body>
+</html>

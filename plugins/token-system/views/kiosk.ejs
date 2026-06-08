@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kiosk | Smart Queue System</title>
+
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <%
+        // SAFE VARIABLE INITIALIZATION
+        const oldName = customerName || '';
+        const oldCnic = cnicNum || '';
+        const oldService = serviceType || '';
+        const paused = isPaused || false;
+    %>
+
+   <style>
+    body {
+        font-family: 'Inter', sans-serif;
+        background: linear-gradient(135deg, #0f172a, #1e293b);
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #1e293b;
+    }
+
+    .kiosk-wrapper {
+        width: 100%;
+        max-width: 550px;
+        background: white;
+        border-radius: 20px;
+        padding: 50px 40px;
+        box-shadow: 0 30px 60px rgba(0,0,0,0.35);
+        animation: fadeIn 0.4s ease;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(15px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .kiosk-header {
+        text-align: center;
+        margin-bottom: 35px;
+    }
+
+    .kiosk-header h1 {
+        font-weight: 700;
+        font-size: 28px;
+        margin-bottom: 8px;
+        color: #0f172a;
+    }
+
+    .kiosk-header p {
+        color: #64748b;
+        font-size: 15px;
+    }
+
+    label {
+        font-weight: 600;
+        margin-bottom: 8px;
+        display: block;
+        color: #334155;
+    }
+
+    input[type="text"] {
+        width: 100%;
+        padding: 14px 16px;
+        border-radius: 10px;
+        border: 1px solid #d1d5db;
+        font-size: 15px;
+        margin-bottom: 20px;
+        transition: all 0.2s ease;
+    }
+
+    input[type="text"]:focus {
+        border-color: #4361ee;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(67,97,238,0.15);
+    }
+
+    .service-btn {
+        width: 100%;
+        padding: 16px;
+        margin-bottom: 14px;
+        border-radius: 12px;
+        border: 1px solid #e5e7eb;
+        background: #f8fafc;
+        font-weight: 600;
+        transition: all 0.25s ease;
+        cursor: pointer;
+    }
+
+    .service-btn:hover {
+        background: #eef2ff;
+        border-color: #4361ee;
+        transform: translateY(-2px);
+    }
+
+    .service-btn.active {
+        background: linear-gradient(135deg, #4361ee, #3a0ca3);
+        color: white;
+        border: none;
+        box-shadow: 0 10px 25px rgba(67,97,238,0.3);
+    }
+
+    .hidden {
+        display: none;
+    }
+
+    .submit-btn {
+        width: 100%;
+        padding: 18px;
+        border-radius: 12px;
+        border: none;
+        font-size: 18px;
+        font-weight: 600;
+        background: linear-gradient(135deg, #4361ee, #3a0ca3);
+        color: white;
+        transition: all 0.3s ease;
+        margin-top: 10px;
+    }
+
+    .submit-btn:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 15px 35px rgba(67,97,238,0.35);
+    }
+
+    .submit-btn:disabled {
+        background: #cbd5e1;
+        cursor: not-allowed;
+    }
+
+    /* Paused Screen */
+    .paused-box {
+        background: #fff3cd;
+        border: 1px solid #ffeeba;
+        padding: 30px;
+        border-radius: 15px;
+        text-align: center;
+    }
+
+    .paused-box h2 {
+        font-weight: 700;
+        margin-bottom: 10px;
+    }
+
+    .paused-box a {
+        display: inline-block;
+        margin-top: 15px;
+        padding: 10px 20px;
+        background: #4361ee;
+        color: white;
+        border-radius: 8px;
+        text-decoration: none;
+    }
+
+    @media (max-width: 600px) {
+        .kiosk-wrapper {
+            margin: 20px;
+            padding: 35px 25px;
+        }
+    }
+</style>
+</head>
+
+<body>
+<div class="kiosk-wrapper">
+
+    <div class="kiosk-header">
+        <h1>Queue Kiosk</h1>
+        <p>Get your service token</p>
+    </div>
+
+    <% if (paused) { %>
+
+        <div style="text-align:center; padding:20px; background:#ffeaa7;">
+            <h2>Service Temporarily Paused</h2>
+            <p>Please wait while we resume service</p>
+            <a href="/dashboard">Go to Dashboard</a>
+        </div>
+
+    <% } else { %>
+
+    <form action="/generate-token" method="POST" id="kioskForm">
+
+        <!-- NAME -->
+        <div>
+            <label>Your Name *</label>
+            <input 
+                type="text"
+                name="customerName"
+                id="customerName"
+                value="<%= oldName %>"
+                required
+            />
+        </div>
+
+        <!-- SERVICE -->
+        <div>
+            <label>Select Service *</label>
+
+            <input type="hidden" name="serviceType" id="serviceType" value="<%= oldService %>">
+
+            <button type="button"
+                class="service-btn <%= oldService === 'New' ? 'active' : '' %>"
+                onclick="selectService('New', this)">
+                New CNIC
+            </button>
+
+            <button type="button"
+                class="service-btn <%= oldService === 'Update' ? 'active' : '' %>"
+                onclick="selectService('Update', this)">
+                Update CNIC
+            </button>
+
+            <button type="button"
+                class="service-btn <%= oldService === 'Renewal' ? 'active' : '' %>"
+                onclick="selectService('Renewal', this)">
+                Renewal CNIC
+            </button>
+        </div>
+
+        <!-- CNIC SECTION -->
+        <div id="cnicSection" class="<%= (oldService && oldService !== 'New') ? '' : 'hidden' %>">
+            <label>CNIC Number *</label>
+
+            <input
+                type="text"
+                name="cnicNum"
+                id="cnicNum"
+                value="<%= oldCnic %>"
+                placeholder="12345-1234567-1"
+                pattern="[0-9]{5}-[0-9]{7}-[0-9]{1}"
+            />
+        </div>
+
+        <button type="submit" id="submitBtn" class="submit-btn" disabled>
+            Generate Token
+        </button>
+
+    </form>
+
+    <% } %>
+
+</div>
+
+<script>
+function selectService(service, btn) {
+
+    document.getElementById('serviceType').value = service;
+
+    document.querySelectorAll('.service-btn').forEach(b => {
+        b.classList.remove('active');
+    });
+
+    btn.classList.add('active');
+
+    const cnicSection = document.getElementById('cnicSection');
+    const cnicInput = document.getElementById('cnicNum');
+
+    if (service === 'New') {
+        cnicSection.classList.add('hidden');
+        cnicInput.required = false;
+        cnicInput.value = '';
+    } else {
+        cnicSection.classList.remove('hidden');
+        cnicInput.required = true;
+    }
+
+    validateForm();
+}
+
+function validateForm() {
+
+    const name = document.getElementById('customerName').value.trim();
+    const service = document.getElementById('serviceType').value;
+    const cnic = document.getElementById('cnicNum').value.trim();
+
+    const submitBtn = document.getElementById('submitBtn');
+
+    if (!name || !service) {
+        submitBtn.disabled = true;
+        return;
+    }
+
+    if (service !== 'New') {
+        const pattern = /^[0-9]{5}-[0-9]{7}-[0-9]{1}$/;
+
+        if (!pattern.test(cnic)) {
+            submitBtn.disabled = true;
+            return;
+        }
+    }
+
+    submitBtn.disabled = false;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('customerName').addEventListener('input', validateForm);
+    document.getElementById('cnicNum').addEventListener('input', validateForm);
+
+    validateForm();
+});
+</script>
+
+</body>
+</html>

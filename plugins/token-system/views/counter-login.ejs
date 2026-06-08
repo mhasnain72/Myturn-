@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Counter Login</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <style>
+        .login-container {
+            max-width: 400px;
+            margin: 100px auto;
+            padding: 40px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+        }
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        .login-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #4361ee, #3a0ca3);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .error {
+            color: #ef4444;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <h1><i class="fas fa-desktop"></i> Counter Login</h1>
+            <p>Enter your counter credentials</p>
+        </div>
+        
+        <% if (error) { %>
+            <div class="error">
+                <i class="fas fa-exclamation-circle"></i> <%= error %>
+            </div>
+        <% } %>
+        
+        <form method="POST" action="/counter-login">
+            <div class="input-group">
+                <label>Counter ID</label>
+                <input type="text" name="login_id" required placeholder="counter1, counter2, etc.">
+            </div>
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" name="password" required value="counter123">
+            </div>
+            <button type="submit" class="login-btn">
+                <i class="fas fa-sign-in-alt"></i> Login to Counter
+            </button>
+        </form>
+        
+        <div style="margin-top: 20px; text-align: center; font-size: 14px; color: #6b7280;">
+            <p>Demo Credentials:</p>
+            <p>counter1 / counter123</p>
+            <p>counter2 / counter123</p>
+            <p>counter3 / counter123</p>
+            <p>counter4 / counter123</p>
+        </div>
+    </div>
+</body>
+</html>
