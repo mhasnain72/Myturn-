@@ -1,11 +1,11 @@
 const mysql = require('mysql2');
 
 const db = mysql.createConnection({
-    host: process.env.MYSQLHOST || 'localhost',
-    user: process.env.MYSQLUSER || 'root',
-    password: process.env.MYSQLPASSWORD || '',
-    database: process.env.MYSQLDATABASE || 'smart_queue_db',
-    port: process.env.MYSQLPORT || 3306
+    host: 'mysql.railway.internal',
+    user: 'root',
+    password: 'LqmAEMJqoWNakSiZAzAsSwyQwAzRfcMp',
+    database: 'railway',
+    port: 3306
 });
 
 db.connect((err) => {
