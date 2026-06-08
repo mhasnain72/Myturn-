@@ -1,19 +1,18 @@
 const mysql = require('mysql2');
 
-// Railway ke environment variables use karo, nahi toh localhost
 const db = mysql.createConnection({
-    host: process.env.DB_HOST || process.env.MYSQLHOST || 'localhost',
-    user: process.env.DB_USER || process.env.MYSQLUSER || 'root',
-    password: process.env.DB_PASSWORD || process.env.MYSQLPASSWORD || '',
-    database: process.env.DB_NAME || process.env.MYSQLDATABASE || 'smart_queue_db',
-    port: process.env.DB_PORT || process.env.MYSQLPORT || 3306
+    host: process.env.MYSQLHOST || 'localhost',
+    user: process.env.MYSQLUSER || 'root',
+    password: process.env.MYSQLPASSWORD || '',
+    database: process.env.MYSQLDATABASE || 'smart_queue_db',
+    port: process.env.MYSQLPORT || 3306
 });
 
 db.connect((err) => {
     if (err) {
-        console.error('❌ Database connection failed:', err.message);
+        console.log('❌ Database Error:', err.message);
     } else {
-        console.log('✅ Database connected successfully!');
+        console.log('✅ Database Connected');
     }
 });
 
